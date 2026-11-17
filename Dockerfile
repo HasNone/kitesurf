@@ -87,7 +87,8 @@ COPY --from=build --chown=65532:65532 /state /state
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY proxy.mjs /usr/local/lib/kitesurf/proxy.mjs
 
-ARG KITESURF_REF=6dd23026b233f594f32b911ab4d82e3b717cec43
+# The value comes from --build-arg; the pin lives only in the build stage.
+ARG KITESURF_REF
 LABEL org.opencontainers.image.title="kitesurf" \
       org.opencontainers.image.source="https://github.com/cloudflare/kitesurf" \
       org.opencontainers.image.licenses="Apache-2.0" \
