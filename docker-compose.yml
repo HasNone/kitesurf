@@ -1,0 +1,41 @@
+# Works under Docker and rootless Podman (podman-compose).
+services:
+  kitesurf:
+    image: ${KITESURF_IMAGE:-kitesurf:local}
+    container_name: kitesurf
+    restart: unless-stopped
+    environment:
+      KITESURF_PORT: "8787"
+      KITESURF_ALLOWED_HOSTS: ${KITESURF_ALLOWED_HOSTS:-}
+      KITESURF_AUTH_TOKEN: ${KITESURF_AUTH_TOKEN:-}
+      KITESURF_PAGE_CPU_MS_CAP: ${KITESURF_PAGE_CPU_MS_CAP:-}
+      KITESURF_PAGE_WALL_MS_CAP: ${KITESURF_PAGE_WALL_MS_CAP:-}
+      KITESURF_ALLOW_PRIVATE_NETWORK: ${KITESURF_ALLOW_PRIVATE_NETWORK:-}
+      KITESURF_DISABLE_PARTIAL_RASTER: ${KITESURF_DISABLE_PARTIAL_RASTER:-}
+      KITESURF_RESOURCE_DRAIN_QUIET_TURNS: ${KITESURF_RESOURCE_DRAIN_QUIET_TURNS:-}
+      KITESURF_OTLP_ENDPOINT: ${KITESURF_OTLP_ENDPOINT:-}
+    ports:
+      # Loopback only. The engine has no authentication of its own; a Host
+      # check (and an optional token) sits in front of it. Do not bind
+      # 0.0.0.0 unless something authenticated sits in front of this too.
+      - "${KITESURF_BIND:-127.0.0.1}:${KITESURF_PORT:-8787}:8787"
+    volumes:
+      - kitesurf-state:/state
+    # Hardening: the engine runs untrusted page JavaScript.
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: ${KITESURF_PIDS_LIMIT:-512}
+    mem_limit: ${KITESURF_MEM_LIMIT:-4g}
+    # Scratch space wrangler/miniflare write to (the root filesystem is read-only).
+    tmpfs:
+      - /tmp:mode=1777
+      - /app/packages/engine/.wrangler:mode=1777
+      - /app/packages/engine/node_modules/.mf:mode=1777
+      - /app/packages/engine/test/fixtures-worker/.wrangler:mode=1777
+      - /app/packages/engine/test/fixtures-worker/node_modules/.mf:mode=1777
+
+volumes:
+  kitesurf-state:
